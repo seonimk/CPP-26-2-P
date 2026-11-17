@@ -74,6 +74,33 @@ void World::moveRabbit(Rabbit* r, int nx, int ny) {
     cell[ny][nx] = r;
 }
 
+// (x, y)에 토끼 한 마리 추가 (번식할 때 사용)
+void World::addRabbitAt(int x, int y, int energy) {
+    Rabbit* r = new Rabbit(x, y, energy);
+    rabbits.push_back(r);
+    cell[y][x] = r;
+}
+
+// 토끼 죽음 : 죽었다고 표시하고 격자에서만 비운다 (아직 delete 하지 않음)
+void World::killRabbit(Rabbit* r) {
+    r -> alive = false;
+    cell[r->y][r->x] = nullptr;
+}
+
+// 죽은 토끼들을 delete 하고 목록에서 뺀다
+void World::removeDead() {
+    vector<Rabbit*> survivors;
+    for (Rabbit* r : rabbits) {
+        if (r -> alive) {
+            survivors.push_back(r);
+        }
+        else {
+            delete r;
+        }
+    }
+    rabbits = survivors;
+}
+
 // 풀이 없는 칸에 매 턴 GRASS_REGROW 확률로 풀이 다시 날 확률(%)
 void World::regrowGrass() {
     for (int y = 0; y < HEIGHT; y++) {
@@ -86,11 +113,16 @@ void World::regrowGrass() {
 }
 
 // 한 턴 진행
-// 토끼들이 행동한 뒤 풀이 자란다.
+// 토끼들이 행동한 뒤 죽은 토끼를 치우고 풀이 자란다.
 void World::step() {
-    for (Rabbit* r : rabbits) {
-        r->act(*this);
+    // 이번 턴 시작할 때의 토끼만 행동 (새끼는 다음 턴부터)
+    vector<Rabbit*> current = rabbits;
+    for (Rabbit* r : current) {
+        if (r->alive) {
+            r->act(*this);
+        }
     }
+    removeDead();
     regrowGrass();
 }
 
