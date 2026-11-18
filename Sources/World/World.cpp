@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include "World.h"
 #include "../Rabbit/Rabbit.h"
+#include "../Fox/Fox.h"
 using namespace std;
 
 // 처음 풀 배치 : 칸마다 GRASS_START 확률로 풀이 있음
@@ -12,6 +13,7 @@ World::World() {
         for (int x = 0; x < WIDTH; x++) {
             grass[y][x] = (rand() % 100) < GRASS_START;
             cell[y][x] = nullptr;
+            foxCell[y][x] = nullptr;
         }
     }
 }
@@ -20,6 +22,10 @@ World::World() {
 World::~World() {
     for (Rabbit* r : rabbits) {
         delete r;
+    }
+    
+    for (Fox* f : foxes) {
+        delete f;
     }
 }
 
@@ -52,7 +58,7 @@ bool World::randomEmptyNeighbor(int x, int y, int& nx, int& ny) {
     for (int i = 0; i < 4; i++) {
         int tx = x + dx[i];
         int ty = y + dy[i];
-        if (inside(tx, ty) && cell[ty][tx] == nullptr) {    // 범위 검사를 먼저!
+        if (inside(tx, ty) && cell[ty][tx] == nullptr && foxCell[ty][tx] == nullptr) {    // 범위 검사를 먼저!
             candidates.push_back(i);
         }
     }
@@ -101,6 +107,29 @@ void World::removeDead() {
     rabbits = survivors;
 }
 
+// 토끼도 여우도 없는 칸을 무작위로 골라 여우를 count 마리 배치
+void World::addFoxes(int count) {
+    int added = 0;
+    while (added < count) {
+        int x = rand() % WIDTH;
+        int y = rand() % HEIGHT;
+        if (cell[y][x] == nullptr && foxCell[y][x] == nullptr) {
+            Fox* f = new Fox(x, y, FOX_ENERGY);
+            foxes.push_back(f);
+            foxCell[y][x] = f;
+            added++;
+        }
+    }
+}
+
+// 여우 이동 : 토끼 이동과 같은 순서 (옛 칸 비우기 -> 좌표 -> 새 칸)
+void World::moveFox(Fox* f, int nx, int ny) {
+    foxCell[f->y][f->x] = nullptr;
+    f->x = nx;
+    f->y = ny;
+    foxCell[ny][nx] = f;
+}
+
 // 풀이 없는 칸에 매 턴 GRASS_REGROW 확률로 풀이 다시 날 확률(%)
 void World::regrowGrass() {
     for (int y = 0; y < HEIGHT; y++) {
@@ -122,6 +151,14 @@ void World::step() {
             r->act(*this);
         }
     }
+    // 여우도 같은 방식으로
+    vector<Fox*> currentFoxes = foxes;
+    for (Fox* f : currentFoxes) {
+        if (f->alive) {
+            f->act(*this);
+        }
+    }
+
     removeDead();
     regrowGrass();
 }
@@ -131,8 +168,10 @@ void World::Print(int turn) {
     string screen;
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
-            if (cell[y][x] != nullptr)
-                screen += "🐰";     // 토끼를 풀보다 먼저 확인
+            if (foxCell[y][x] != nullptr)
+                screen += "🦊";     // 여우를 가장 먼저 확인
+            else if (cell[y][x] != nullptr)
+                screen += "🐰";     // 그다음 토끼
             else if (grass[y][x])
                 screen += "🌱";
             else
@@ -140,6 +179,6 @@ void World::Print(int turn) {
         }
         screen += "\n";
     }
-    screen += "Turn: " + to_string(turn) + "   🐰 " + to_string(rabbits.size()) + "\n";
+    screen += "Turn: " + to_string(turn) + "   🐰 " + to_string(rabbits.size()) + "   🦊 " + to_string(foxes.size()) + "\n";
     cout << screen;
 }
