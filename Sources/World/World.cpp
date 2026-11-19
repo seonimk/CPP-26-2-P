@@ -93,8 +93,9 @@ void World::killRabbit(Rabbit* r) {
     cell[r->y][r->x] = nullptr;
 }
 
-// 죽은 토끼들을 delete 하고 목록에서 뺀다
+// delete 하고 목록에서 뺀다
 void World::removeDead() {
+    // 토끼
     vector<Rabbit*> survivors;
     for (Rabbit* r : rabbits) {
         if (r -> alive) {
@@ -105,6 +106,18 @@ void World::removeDead() {
         }
     }
     rabbits = survivors;
+
+    // 여우
+    vector<Fox*> foxSurvivors;
+    for (Fox* f : foxes) {
+        if (f->alive) {
+            foxSurvivors.push_back(f);
+        }
+        else {
+            delete f;
+        }
+    }
+    foxes = foxSurvivors;
 }
 
 // 토끼도 여우도 없는 칸을 무작위로 골라 여우를 count 마리 배치
@@ -128,6 +141,19 @@ void World::moveFox(Fox* f, int nx, int ny) {
     f->x = nx;
     f->y = ny;
     foxCell[ny][nx] = f;
+}
+
+// (x, y)에 여우 한 마리 추가 (번식할 때 사용)
+void World::addFoxAt(int x, int y, int energy) {
+    Fox* f = new Fox(x, y, energy);
+    foxes.push_back(f);
+    foxCell[y][x] = f;
+}
+
+// 여우 죽음 : 죽었다고 표시하고 격자에서만 비운다 (아직 delete 하지 않음!)
+void World::killFox(Fox* f) {
+    f->alive = false;
+    foxCell[f->y][f->x] = nullptr;
 }
 
 // 풀이 없는 칸에 매 턴 GRASS_REGROW 확률로 풀이 다시 날 확률(%)

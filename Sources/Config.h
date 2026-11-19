@@ -14,5 +14,6 @@ const int RABBIT_BIRTH = 10;    // 이 에너지 이상이면 새끼를 낳음
 
 // 여우 관련 상수
 const int FOX_COUNT = 3;        // 처음 여우 수
-const int FOX_ENERGY = 12;      // 여우 시작 에너지
-const int FOX_EAT = 8;          // 토끼를 잡아먹으면 얻는 에너지
+const int FOX_ENERGY = 20;      // 여우 시작 에너지
+const int FOX_EAT = 10;         // 토끼를 잡아먹으면 얻는 에너지
+const int FOX_BIRTH = 40;       // 이 에너지 이상이면 새끼를 낳음
